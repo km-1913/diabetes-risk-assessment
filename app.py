@@ -1,52 +1,56 @@
 import streamlit as st
-import joblib
+import pickle
 import numpy as np
 
 # Load model and scaler
-model = joblib.load("best_diabetes_model.pkl")
-scaler = joblib.load("scaler.pkl")
+model = pickle.load(open("best_diabetes_model.pkl", "rb"))
+scaler = pickle.load(open("scaler.pkl", "rb"))
 
+# Title
 st.title("Diabetes Risk Assessment System")
 
 st.write("Enter patient details below:")
 
-pregnancies = st.number_input("Pregnancies", min_value=0)
+# Input Fields
+preg = st.number_input("Pregnancies", min_value=0)
 glucose = st.number_input("Glucose", min_value=0)
-blood_pressure = st.number_input("Blood Pressure", min_value=0)
-skin_thickness = st.number_input("Skin Thickness", min_value=0)
+bp = st.number_input("Blood Pressure", min_value=0)
+skin = st.number_input("Skin Thickness", min_value=0)
 insulin = st.number_input("Insulin", min_value=0)
 bmi = st.number_input("BMI", min_value=0.0)
 dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0)
-age = st.number_input("Age", min_value=1)
+age = st.number_input("Age", min_value=0)
 
+# Prediction Button
 if st.button("Predict Diabetes Risk"):
 
-    patient_data = [[
-        pregnancies,
+    # Input array
+    input_data = np.array([[
+        preg,
         glucose,
-        blood_pressure,
-        skin_thickness,
+        bp,
+        skin,
         insulin,
         bmi,
         dpf,
         age
-    ]]
+    ]])
 
-    patient_data_scaled = scaler.transform(patient_data)
+    # Scale input
+    input_scaled = scaler.transform(input_data)
 
-    prediction = model.predict(patient_data_scaled)
+    # Predict
+    prediction = model.predict(input_scaled)[0]
 
-    if prediction[0] == 1:
-        st.error("High Risk: Patient may have diabetes.")
+    # Probability
+    probability = model.predict_proba(input_scaled)[0][1]
 
-        st.write("Recommendations:")
-        st.write("- Consult a doctor")
-        st.write("- Exercise regularly")
-        st.write("- Reduce sugar intake")
-
+    # Display Result
+    if prediction == 1:
+        st.error("High Risk: Patient is likely to have diabetes.")
     else:
         st.success("Low Risk: Patient is unlikely to have diabetes.")
 
-        st.write("Recommendations:")
-        st.write("- Maintain healthy lifestyle")
-        st.write("- Continue regular exercise")
+    # Show prediction details
+    st.write(f"Prediction Output: {prediction}")
+    st.write(f"Diabetes Probability: {probability:.2f}")
